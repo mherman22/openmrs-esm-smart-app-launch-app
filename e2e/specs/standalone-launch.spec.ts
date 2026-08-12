@@ -135,5 +135,62 @@ test('a standalone launch chooses a patient and returns that patient as launch c
     expect(patient.status(), 'the granted token cannot read the patient it was granted for').toBe(200);
   });
 
+  await test.step('the session the launch created does not outlive it', async () => {
+    // The launch signs the clinician in so they can search. That session used to survive the
+    // hand-off, leaving the browser holding a fully privileged session that no visible logout would
+    // obviously end -- on a shared workstation, the next person's session.
+    // page.context().request shares the browser's cookie jar; the bare `request` fixture has its own,
+    // so it would report an anonymous session no matter what the launch left behind.
+    const session = await page.context().request.get(`${OPENMRS}/ws/rest/v1/session`);
+    expect(session.status(), 'the session endpoint should still answer normally').toBe(200);
+    expect((await session.json()).authenticated, 'the launch left an authenticated session behind').toBe(false);
+  });
+
   expect(errors, 'the launch produced JavaScript errors').toEqual([]);
+});
+
+/**
+ * The counterpart to ending the launch's own session: a clinician who was already working in OpenMRS
+ * keeps theirs. That session predates the launch and is not the launch's to end — doing so would log
+ * them out of the application they are using.
+ */
+test('a clinician already signed in to OpenMRS keeps their session through a launch', async ({ page }) => {
+  // Establishes an ordinary session in the browser's own cookie jar, without driving the login UI.
+  // It has to be the browser's jar: the launch is driven in the browser, and a session it cannot see
+  // is a session it cannot preserve or destroy.
+  const api = page.context().request;
+  const signIn = await api.get(`${OPENMRS}/ws/rest/v1/session`, {
+    headers: { Authorization: `Basic ${Buffer.from(`${USERNAME}:${PASSWORD}`).toString('base64')}` },
+  });
+  expect((await signIn.json()).authenticated, 'could not establish an ordinary session').toBe(true);
+
+  // And give it a login location, which is what signing in through OpenMRS actually does. Without one
+  // the frontend diverts to its location picker instead of rendering any route, and the launch never
+  // arrives — an artefact of the fixture, not of the launch.
+  const locations = await api.get(`${OPENMRS}/ws/rest/v1/location?limit=1`);
+  const locationUuid = (await locations.json()).results?.[0]?.uuid;
+  expect(locationUuid, 'no location to sign in at').toBeTruthy();
+  await api.post(`${OPENMRS}/ws/rest/v1/session`, { data: { sessionLocation: locationUuid } });
+
+  // A fresh browser context has no session with the authorization server, so the form is always shown.
+  await page.goto(authorizeUrl());
+  await page.locator('#username').fill(USERNAME);
+  await page.locator('#password').fill(PASSWORD);
+  await page.locator('input[type=submit], button[type=submit]').click();
+  await expect(page.getByRole('heading', { name: /choose a patient/i })).toBeVisible();
+
+  await page.getByRole('searchbox').fill(SEARCH_TERM);
+  const selectButtons = page.getByRole('button', { name: /^Select$/ });
+  await expect(selectButtons.first()).toBeVisible();
+
+  // The session is ended, or not, while this request is served — so wait for the request itself
+  // rather than for a duration.
+  const handOff = page.waitForResponse((response) => response.url().includes('/ms/smartLaunchOptionSelected'));
+  await selectButtons.first().click();
+  await handOff;
+
+  const after = await api.get(`${OPENMRS}/ws/rest/v1/session`);
+  const session = await after.json();
+  expect(session.authenticated, 'the launch logged the clinician out of their own session').toBe(true);
+  expect(session.user?.username ?? session.user?.display).toContain(USERNAME);
 });
