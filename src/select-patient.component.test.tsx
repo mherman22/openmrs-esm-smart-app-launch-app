@@ -1,0 +1,117 @@
+import React from 'react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import SelectPatient from './select-patient.component';
+import { usePatientSearch } from './patient-search.resource';
+
+vi.mock('./patient-search.resource');
+
+vi.mock('@openmrs/esm-framework', () => ({
+  age: () => '34',
+  formatDate: () => '01-Jan-1990',
+  parseDate: (value: string) => new Date(value),
+  openmrsFetch: vi.fn(),
+  restBaseUrl: '/ws/rest/v1',
+}));
+
+const mockUsePatientSearch = vi.mocked(usePatientSearch);
+
+const ADA = {
+  uuid: 'patient-uuid-1',
+  display: '10000X - Ada Lovelace',
+  identifiers: [{ identifier: '10000X' }],
+  person: { display: 'Ada Lovelace', gender: 'F', birthdate: '1990-01-01' },
+};
+
+/** Puts a launch token in the URL, which is how the authorization server arrives here. */
+function withUrl(search: string) {
+  Object.defineProperty(window, 'location', {
+    writable: true,
+    value: new URL(`http://localhost/openmrs/spa/smart/select-patient${search}`) as unknown as Location,
+  });
+  (window.location as unknown as { assign: () => void }).assign = vi.fn();
+}
+
+function searchReturns(patients: Array<typeof ADA>, overrides = {}) {
+  mockUsePatientSearch.mockReturnValue({
+    patients,
+    isLoading: false,
+    error: undefined,
+    hasSearched: patients.length > 0,
+    ...overrides,
+  } as ReturnType<typeof usePatientSearch>);
+}
+
+describe('SelectPatient', () => {
+  beforeEach(() => {
+    (window as unknown as { openmrsBase: string }).openmrsBase = '/openmrs';
+    withUrl('?token=signed-launch-token&appName=Growth%20Chart');
+    searchReturns([]);
+  });
+
+  afterEach(() => vi.clearAllMocks());
+
+  it('names the app that is asking, so the clinician knows what they are sharing with', () => {
+    render(<SelectPatient />);
+
+    expect(screen.getByRole('heading', { name: /choose a patient/i })).toBeInTheDocument();
+    expect(screen.getByText(/Growth Chart/)).toBeInTheDocument();
+  });
+
+  /**
+   * The launch cannot be completed without the token, and a search box that could never succeed
+   * is worse than saying so.
+   */
+  it('refuses a link with no launch token, and offers no search', () => {
+    withUrl('');
+
+    render(<SelectPatient />);
+
+    expect(screen.getByText(/not a valid launch/i)).toBeInTheDocument();
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
+  });
+
+  it('hands the chosen patient and the original token to the launch endpoint', async () => {
+    const user = userEvent.setup();
+    searchReturns([ADA]);
+
+    render(<SelectPatient />);
+    await user.click(screen.getByRole('button', { name: /select/i }));
+
+    await waitFor(() => expect(window.location.assign).toHaveBeenCalled());
+
+    const target = new URL(vi.mocked(window.location.assign).mock.calls[0][0] as string, 'http://localhost');
+    expect(target.pathname).toBe('/openmrs/ms/smartLaunchOptionSelected');
+    expect(target.searchParams.get('patientId')).toBe(ADA.uuid);
+    // Passed back unaltered: it is signed with a secret this page does not hold.
+    expect(target.searchParams.get('token')).toBe('signed-launch-token');
+  });
+
+  it('shares nothing when the clinician cancels', async () => {
+    const user = userEvent.setup();
+    searchReturns([ADA]);
+
+    render(<SelectPatient />);
+    await user.click(screen.getByRole('button', { name: /cancel/i }));
+
+    expect(screen.getByText(/launch cancelled/i)).toBeInTheDocument();
+    expect(window.location.assign).not.toHaveBeenCalled();
+  });
+
+  it('says so when a search matches nobody, rather than looking broken', () => {
+    searchReturns([], { hasSearched: true });
+
+    render(<SelectPatient />);
+
+    expect(screen.getByText(/no patients match/i)).toBeInTheDocument();
+  });
+
+  it('surfaces a failed search instead of showing an empty list', () => {
+    searchReturns([], { hasSearched: true, error: new Error('network down') });
+
+    render(<SelectPatient />);
+
+    expect(screen.getByText(/could not search for patients/i)).toBeInTheDocument();
+  });
+});

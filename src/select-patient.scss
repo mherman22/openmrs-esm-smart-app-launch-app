@@ -2,24 +2,76 @@
 @use '@carbon/type';
 
 .container {
-  padding: layout.$spacing-05;
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: 42rem;
+  margin: layout.$spacing-07 auto;
+  padding: 0 layout.$spacing-05;
 }
 
-.tile {
-  padding: layout.$spacing-06;
+.header {
   margin-bottom: layout.$spacing-05;
 }
 
 .heading {
   @include type.type-style('heading-03');
-  margin-bottom: layout.$spacing-04;
-  color: var(--cds-text-primary);
+  margin: 0 0 layout.$spacing-03;
 }
 
-.content {
+.subtitle {
   @include type.type-style('body-01');
   color: var(--cds-text-secondary);
-  line-height: 1.5;
+  margin: 0;
+}
+
+.notification,
+.loading {
+  margin-top: layout.$spacing-05;
+}
+
+.empty {
+  margin-top: layout.$spacing-05;
+  text-align: center;
+  background-color: var(--cds-layer-02);
+}
+
+.emptyTitle {
+  @include type.type-style('heading-compact-01');
+  margin: 0 0 layout.$spacing-02;
+}
+
+.emptyBody {
+  @include type.type-style('body-compact-01');
+  color: var(--cds-text-secondary);
+  margin: 0;
+}
+
+.results {
+  list-style: none;
+  padding: 0;
+  margin: layout.$spacing-05 0 0;
+}
+
+.result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: layout.$spacing-05;
+  margin-bottom: layout.$spacing-03;
+}
+
+.name {
+  @include type.type-style('heading-compact-01');
+  display: block;
+}
+
+.detail {
+  @include type.type-style('label-01');
+  color: var(--cds-text-secondary);
+  display: block;
+  margin-top: layout.$spacing-02;
+}
+
+.actions {
+  margin-top: layout.$spacing-06;
+  display: flex;
+  justify-content: flex-end;
 }

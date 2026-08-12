@@ -21,3 +21,11 @@ declare namespace NodeJS {
     context(directory: string, useSubdirectories?: boolean, regExp?: RegExp, mode?: string): RequireContext;
   }
 }
+
+declare global {
+  interface Window {
+    openmrsBase: string;
+    spaBase: string;
+    getOpenmrsSpaBase(): string;
+  }
+}
