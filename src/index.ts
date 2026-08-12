@@ -18,7 +18,12 @@ export const root = getAsyncLifecycle(() => import('./root.component'), options)
 
 // Extensions
 
+// The way a clinician starts a SMART app for the patient in front of them. In the patient action menu
+// rather than as a chart tab: it is an action taken about a patient, not a view of them.
+export const launchAppAction = getAsyncLifecycle(() => import('./launch-app.extension'), options);
+
 // Modals
 
-// Workspaces
+export const smartAppsModal = getAsyncLifecycle(() => import('./smart-apps.modal'), options);
 
+// Workspaces

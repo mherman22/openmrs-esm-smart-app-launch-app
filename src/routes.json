@@ -11,5 +11,19 @@
       "online": true
     }
   ],
-  "extensions": []
+  "extensions": [
+    {
+      "name": "launch-smart-app-action",
+      "component": "launchAppAction",
+      "slot": "patient-actions-slot",
+      "online": true,
+      "offline": false
+    }
+  ],
+  "modals": [
+    {
+      "name": "smart-apps-modal",
+      "component": "smartAppsModal"
+    }
+  ]
 }
