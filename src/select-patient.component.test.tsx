@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SelectPatient from './select-patient.component';
+import { useSession } from '@openmrs/esm-framework';
 import { usePatientSearch } from './patient-search.resource';
 
 vi.mock('./patient-search.resource');
@@ -13,9 +14,19 @@ vi.mock('@openmrs/esm-framework', () => ({
   parseDate: (value: string) => new Date(value),
   openmrsFetch: vi.fn(),
   restBaseUrl: '/ws/rest/v1',
+  useSession: vi.fn(),
 }));
 
 const mockUsePatientSearch = vi.mocked(usePatientSearch);
+const mockUseSession = vi.mocked(useSession);
+
+/**
+ * The session is established by the module's servlet before this screen loads, so the normal case
+ * is an authenticated session already in place.
+ */
+function sessionIs(state: Partial<ReturnType<typeof useSession>>) {
+  mockUseSession.mockReturnValue({ authenticated: true, ...state } as ReturnType<typeof useSession>);
+}
 
 const ADA = {
   uuid: 'patient-uuid-1',
@@ -47,6 +58,7 @@ describe('SelectPatient', () => {
   beforeEach(() => {
     (window as unknown as { openmrsBase: string }).openmrsBase = '/openmrs';
     withUrl('?token=signed-launch-token&appName=Growth%20Chart');
+    sessionIs({});
     searchReturns([]);
   });
 
@@ -99,7 +111,21 @@ describe('SelectPatient', () => {
     expect(window.location.assign).not.toHaveBeenCalled();
   });
 
+  /**
+   * Every search needs the session the servlet established. Offering a search box without one would
+   * produce nothing but 401s, which read as a permissions problem rather than a broken launch.
+   */
+  it('explains a launch that arrived without a session, and offers no search', () => {
+    sessionIs({ authenticated: false });
+
+    render(<SelectPatient />);
+
+    expect(screen.getByText(/could not start this launch/i)).toBeInTheDocument();
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
+  });
+
   it('says so when a search matches nobody, rather than looking broken', () => {
+    sessionIs({});
     searchReturns([], { hasSearched: true });
 
     render(<SelectPatient />);

@@ -1,5 +1,9 @@
 {
   "$schema": "https://json.openmrs.org/routes.schema.json",
+  "backendDependencies": {
+    "fhir2": ">=4.2.0",
+    "smartonfhir": ">=2.0.0-0"
+  },
   "pages": [
     {
       "route": "smart/select-patient",
@@ -7,6 +11,5 @@
       "online": true
     }
   ],
-  "extensions": [
-  ]
+  "extensions": []
 }

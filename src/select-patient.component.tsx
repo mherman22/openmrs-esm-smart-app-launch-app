@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, InlineLoading, InlineNotification, Layer, Search, Tile } from '@carbon/react';
-import { age, formatDate, parseDate } from '@openmrs/esm-framework';
+import { age, formatDate, parseDate, useSession } from '@openmrs/esm-framework';
 import { usePatientSearch, type SearchedPatient } from './patient-search.resource';
 import styles from './select-patient.scss';
 
@@ -22,8 +22,6 @@ const SelectPatient: React.FC = () => {
   const [query, setQuery] = useState('');
   const [handingOff, setHandingOff] = useState(false);
   const [cancelled, setCancelled] = useState(false);
-  const { patients, isLoading, error, hasSearched } = usePatientSearch(query);
-
   const { launchToken, appName } = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
     return {
@@ -31,6 +29,12 @@ const SelectPatient: React.FC = () => {
       appName: params.get('appName') ?? params.get('app'),
     };
   }, []);
+
+  // The launch reaches this screen through the module's patient-selection servlet, which turns the
+  // launch token into an OpenMRS session before the browser gets here. So a session already exists,
+  // and the searches below carry it; arriving without one means something bypassed that servlet.
+  const session = useSession();
+  const { patients, isLoading, error, hasSearched } = usePatientSearch(query);
 
   const selectPatient = useCallback(
     (patient: SearchedPatient) => {
@@ -60,6 +64,25 @@ const SelectPatient: React.FC = () => {
           subtitle={t(
             'missingTokenDetail',
             'It carries no launch token, so there is nothing to complete. Start the app again from your patient chart or app gallery.',
+          )}
+        />
+      </div>
+    );
+  }
+
+  // Every search below needs the session the servlet established. Without it they would all answer
+  // 401, which reads as a permissions problem rather than a broken launch.
+  if (!session.authenticated) {
+    return (
+      <div className={styles.container}>
+        <InlineNotification
+          kind="error"
+          lowContrast
+          hideCloseButton
+          title={t('sessionFailed', 'Could not start this launch')}
+          subtitle={t(
+            'sessionFailedDetail',
+            'The launch token was not accepted. It may have expired, or already been used. Start the app again.',
           )}
         />
       </div>

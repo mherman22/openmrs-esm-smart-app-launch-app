@@ -1,7 +1,5 @@
 {
-  "anApplication": "An application",
   "cancelLaunch": "Cancel",
-  "getStarted": "Get started by adding routes, extensions, or components.",
   "launchCancelled": "Launch cancelled",
   "launchCancelledDetail": "No patient record was shared. You can close this tab.",
   "missingToken": "This link is not a valid launch",
@@ -9,11 +7,12 @@
   "noResults": "No patients match that search",
   "noResultsDetail": "Check the spelling, or search by identifier instead.",
   "searchFailed": "Could not search for patients",
+  "searching": "Searching",
   "searchLabel": "Search by name or identifier",
   "searchPrompt": "Search for the patient whose record this app should open",
-  "searching": "Searching",
   "selectPatient": "Select",
   "selectPatientDescription": "{{appName}} is asking to open a patient record. The record you choose is the only one it will be given access to.",
   "selectPatientHeading": "Choose a patient for this app",
-  "welcomeToModule": "Welcome to smart-app-launch!"
+  "sessionFailed": "Could not start this launch",
+  "sessionFailedDetail": "The launch token was not accepted. It may have expired, or already been used. Start the app again."
 }

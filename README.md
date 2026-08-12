@@ -64,6 +64,9 @@ yarn test
 # Watch tests
 yarn test:watch
 
+# Run the browser tests (needs a running stack; see below)
+yarn test:e2e
+
 # Extract translations
 yarn extract-translations
 
@@ -165,3 +168,24 @@ If you see missing peer dependency warnings, add the missing packages to your `d
 ---
 
 This module was scaffolded with [`@openmrs/create-o3-app`](https://github.com/openmrs/create-o3-app). The `generator` field in `package.json` records the CLI version that produced it and is safe to remove.
+
+## Browser tests
+
+`yarn test:e2e` walks a complete SMART standalone launch in a real browser: an app is redirected to
+the authorization server, the clinician signs in with their own OpenMRS credentials, picks a patient
+here, and the app receives an access token carrying that patient as launch context.
+
+They need a running stack rather than a dev server, because the launch begins at the authorization
+server and ends at the frontend served by OpenMRS. Bring one up with
+[openmrs-distro-smartonfhir](https://github.com/mherman22/openmrs-distro-smartonfhir), then:
+
+```bash
+yarn test:e2e
+```
+
+Point them elsewhere with `E2E_BASE_URL`, `E2E_KEYCLOAK_URL`, `E2E_USERNAME`, `E2E_PASSWORD`,
+`E2E_CLIENT_ID`, `E2E_REDIRECT_URI` and `E2E_PATIENT_SEARCH`.
+
+These exist because the flow they cover cannot be verified any other way. Driven with `curl` it
+passed while being completely broken in a browser: the app shell redirects to the login page before
+this screen can load, discarding the launch token, and only a real browser runs that shell.
