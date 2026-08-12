@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json.openmrs.org/routes.schema.json",
+  "pages": [
+    {
+      "route": "smart/select-patient",
+      "component": "root",
+      "online": true
+    }
+  ],
+  "extensions": [
+  ]
+}
