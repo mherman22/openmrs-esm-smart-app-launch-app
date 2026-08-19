@@ -3,21 +3,34 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SelectPatient from './select-patient.component';
-import { useSession } from '@openmrs/esm-framework';
+import { getDefaultsFromConfigSchema, useConfig, useSession } from '@openmrs/esm-framework';
+import type * as EsmFramework from '@openmrs/esm-framework';
 import { usePatientSearch } from './patient-search.resource';
+import { configSchema, type ConfigSchema } from './config-schema';
 
 vi.mock('./patient-search.resource');
 
-vi.mock('@openmrs/esm-framework', () => ({
-  age: () => '34',
-  formatDate: () => '01-Jan-1990',
-  parseDate: (value: string) => new Date(value),
-  openmrsFetch: vi.fn(),
-  restBaseUrl: '/ws/rest/v1',
-  useSession: vi.fn(),
-}));
+vi.mock('@openmrs/esm-framework', async () => {
+  const actual = await vi.importActual<typeof EsmFramework>('@openmrs/esm-framework');
+
+  return {
+    // Spread rather than listed: the module under test imports Type from here through the config
+    // schema, and a mock that enumerates only what the component uses breaks the moment anything
+    // else in the tree reaches for the framework. getDefaultsFromConfigSchema in particular is left
+    // real, so a test reads the same values a deployment gets before anyone configures anything.
+    ...actual,
+    age: () => '34',
+    formatDate: () => '01-Jan-1990',
+    parseDate: (value: string) => new Date(value),
+    openmrsFetch: vi.fn(),
+    restBaseUrl: '/ws/rest/v1',
+    useConfig: vi.fn(),
+    useSession: vi.fn(),
+  };
+});
 
 const mockUsePatientSearch = vi.mocked(usePatientSearch);
+const mockUseConfig = vi.mocked(useConfig<ConfigSchema>);
 const mockUseSession = vi.mocked(useSession);
 
 /**
@@ -56,6 +69,7 @@ function searchReturns(patients: Array<typeof ADA>, overrides = {}) {
 
 describe('SelectPatient', () => {
   beforeEach(() => {
+    mockUseConfig.mockReturnValue(getDefaultsFromConfigSchema(configSchema));
     (window as unknown as { openmrsBase: string }).openmrsBase = '/openmrs';
     withUrl('?token=signed-launch-token&appName=Growth%20Chart');
     sessionIs({});

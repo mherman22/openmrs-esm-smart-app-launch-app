@@ -1,8 +1,9 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, InlineLoading, InlineNotification, Layer, Search, Tile } from '@carbon/react';
-import { age, formatDate, parseDate, useSession } from '@openmrs/esm-framework';
+import { age, formatDate, parseDate, useConfig, useSession } from '@openmrs/esm-framework';
 import { usePatientSearch, type SearchedPatient } from './patient-search.resource';
+import { type ConfigSchema } from './config-schema';
 import styles from './select-patient.scss';
 
 /**
@@ -34,7 +35,8 @@ const SelectPatient: React.FC = () => {
   // launch token into an OpenMRS session before the browser gets here. So a session already exists,
   // and the searches below carry it; arriving without one means something bypassed that servlet.
   const session = useSession();
-  const { patients, isLoading, error, hasSearched } = usePatientSearch(query);
+  const { patientSearch } = useConfig<ConfigSchema>();
+  const { patients, isLoading, error, hasSearched } = usePatientSearch(query, patientSearch.resultsToShow);
 
   const selectPatient = useCallback(
     (patient: SearchedPatient) => {

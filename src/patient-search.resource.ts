@@ -25,13 +25,13 @@ const MINIMUM_QUERY_LENGTH = 2;
  * before any SMART token exists, so the FHIR endpoints the app is about to use are not
  * available to it yet; what it does have is an ordinary OpenMRS session.
  */
-export function usePatientSearch(query: string) {
+export function usePatientSearch(query: string, resultsToShow: number) {
   const trimmed = query?.trim() ?? '';
   const shouldSearch = trimmed.length >= MINIMUM_QUERY_LENGTH;
 
   const url = shouldSearch
     ? `${restBaseUrl}/patient?q=${encodeURIComponent(trimmed)}` +
-      `&v=custom:(uuid,display,identifiers:(identifier),person:(display,gender,birthdate))&limit=20`
+      `&v=custom:(uuid,display,identifiers:(identifier),person:(display,gender,birthdate))&limit=${resultsToShow}`
     : null;
 
   const { data, error, isLoading } = useSWR<{ data: PatientSearchResponse }>(url, openmrsFetch, {

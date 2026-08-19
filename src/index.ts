@@ -25,5 +25,3 @@ export const launchAppAction = getAsyncLifecycle(() => import('./launch-app.exte
 // Modals
 
 export const smartAppsModal = getAsyncLifecycle(() => import('./smart-apps.modal'), options);
-
-// Workspaces

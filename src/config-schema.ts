@@ -1,21 +1,21 @@
-import { Type, validators } from '@openmrs/esm-framework';
+import { Type } from '@openmrs/esm-framework';
 
 export const configSchema = {
-  // Add your configuration schema here
-  // Example:
-  // logo: {
-  //   src: {
-  //     _type: Type.String,
-  //     _default: '',
-  //     _description: 'The path or URL to the logo image',
-  //     _validators: [validators.isUrl],
-  //   },
-  //   alt: {
-  //     _type: Type.String,
-  //     _default: 'Logo',
-  //     _description: 'The alternative text for the logo image',
-  //   },
-  // },
+  patientSearch: {
+    resultsToShow: {
+      _type: Type.Number,
+      _default: 20,
+      _description:
+        'How many patients a search returns on the standalone-launch selection screen. A launch is ' +
+        'started for one patient, so this is a limit on scrolling rather than on what can be found: ' +
+        'raising it makes a broad search slower without making it more likely to include the right ' +
+        'person. Narrowing the search term is the better answer.',
+    },
+  },
 };
 
-export type ConfigSchema = Record<string, never>;
+export interface ConfigSchema {
+  patientSearch: {
+    resultsToShow: number;
+  };
+}
