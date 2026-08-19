@@ -51,14 +51,14 @@ test('capture the EHR launch, end to end', async ({ page }) => {
   });
 
   await test.step('choose a login location', async () => {
-    const radio = page.getByRole('radio').first();
-    await expect(radio, 'the login did not reach the location picker').toBeVisible({ timeout: 60000 });
+    const location = page.locator('.cds--radio-button-group .cds--radio-button__label').first();
+    await expect(location, 'the login did not reach the location picker').toBeVisible({ timeout: 60000 });
     await shot(page, 'location');
-    // Carbon renders the real input visually hidden behind a styled label, so Playwright's
-    // stability check never passes on it. Clicking the label instead depends on the location's name,
-    // which differs per deployment.
-    // eslint-disable-next-line playwright/no-force-option
-    await radio.check({ force: true });
+    // The label, not the input. Carbon renders the real radio visually hidden behind a styled label, so
+    // a role-based query finds an element that is never visible and the step reads as "the location
+    // picker never appeared". Taking the first label also keeps this independent of the location names,
+    // which differ per deployment.
+    await location.click();
     await page.getByRole('button', { name: /confirm/i }).click();
     await expect(page).not.toHaveURL(/\/spa\/login/, { timeout: 60000 });
   });
@@ -139,13 +139,17 @@ test('capture the EHR launch, end to end', async ({ page }) => {
     }
 
     await launched.waitForURL((url) => url.toString().startsWith(APP), { timeout: 90000 });
+    // The app reads the record before it can render anything, so wait for its verdict rather than for
+    // the page load: a screenshot taken earlier catches a spinner.
+    await expect(launched.locator('.banner h2'), 'the app never reached a verdict').toBeVisible({ timeout: 60000 });
     await shot(launched, 'app-received-the-patient');
 
-    // The point of the whole flow: the app is holding this patient's record.
-    await expect(launched.locator('body'), 'the app did not display the patient it was launched for').toContainText(
-      /patient|born|gender|name/i,
-      { timeout: 30000 },
-    );
+    // The point of the whole flow, and of this app: it is not showing the record back, it is reading
+    // it. The banner counts vitals outside their reference range, and the BMI card holds a value the
+    // server does not store.
+    await expect(launched.locator('.banner h2')).toContainText(/of \d+ latest vitals/i);
+    await expect(launched.locator('svg.chart').first(), 'no vitals were trended').toBeVisible();
+    await shot(launched, 'derived-values');
   });
 
   await test.step('write the redirect chain the documentation quotes', async () => {
@@ -168,7 +172,10 @@ test('capture the EHR launch, end to end', async ({ page }) => {
         .replace(/([?&]state=)[^&\s]+/g, '$1<state>')
         .replace(/(code_challenge=)[^&\s]+/g, '$1<PKCE challenge>')
         .replace(/(client_data%3D|client_data=)(?:(?!%26)[^&\s])+/g, '$1<client data>')
-        .replace(/(tab_id%3D|tab_id=)(?:(?!%26)[^&\s])+/g, '$1<tab id>'),
+        .replace(/(tab_id%3D|tab_id=)(?:(?!%26)[^&\s])+/g, '$1<tab id>')
+        // Per-import, so leaving it in rewrote this file every time the realm was imported and made
+        // the diff look like the flow had changed when nothing had.
+        .replace(/(execution%3D|execution=)(?:(?!%26)[^&\s])+/g, '$1<execution>'),
     );
     fs.writeFileSync(path.join(SHOTS, '..', 'launch-redirects.txt'), redacted.join('\n') + '\n');
     console.warn(`  recorded ${seen.length} navigations`);
