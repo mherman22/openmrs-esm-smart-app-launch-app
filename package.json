@@ -1,5 +1,5 @@
 {
-  "name": "@openmrs/esm-smart-app-launch-app",
+  "name": "@uwdigi/esm-smart-app-launch-app",
   "version": "1.0.0",
   "license": "MPL-2.0",
   "description": "smart-app-launch frontend module for O3",
