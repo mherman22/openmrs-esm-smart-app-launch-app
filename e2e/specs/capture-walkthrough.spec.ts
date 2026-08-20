@@ -11,8 +11,7 @@ import * as path from 'path';
  * is worse than no walkthrough.
  *
  * Run it against a running stack:
- *   ./up.sh                                  # in openmrs-distro-smartonfhir
- *   (cd smart-app && npm install && npm start) &
+ *   docker compose up -d                     # in openmrs-distro-smartonfhir, which pulls the SMART app
  *   npx playwright test --config e2e/playwright.config.ts capture-walkthrough
  */
 
