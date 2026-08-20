@@ -148,6 +148,14 @@ test('capture the EHR launch, end to end', async ({ page }) => {
     // server does not store.
     await expect(launched.locator('.banner h2')).toContainText(/of \d+ latest vitals/i);
     await expect(launched.locator('svg.chart').first(), 'no vitals were trended').toBeVisible();
+
+    // Scroll to the derived card before photographing it. Without this the shot is taken at the same
+    // offset as the one above and the two files come out byte-identical, so the walkthrough illustrated
+    // "the value the server does not store" with a picture that did not contain it.
+    const derived = launched.locator('.card:has(.derived)').first();
+    await derived.scrollIntoViewIfNeeded();
+    await expect(derived.locator('.big'), 'no BMI was derived').toBeVisible();
+    await expect(derived.locator('.cat')).toContainText(/weight|obese/i);
     await shot(launched, 'derived-values');
   });
 
