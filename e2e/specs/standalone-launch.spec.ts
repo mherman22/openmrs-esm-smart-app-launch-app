@@ -6,7 +6,7 @@ const REALM = process.env.E2E_REALM ?? 'openmrs';
 const CLIENT_ID = process.env.E2E_CLIENT_ID ?? 'smartClient';
 const REDIRECT_URI = process.env.E2E_REDIRECT_URI ?? 'http://localhost:3000/';
 const USERNAME = process.env.E2E_USERNAME ?? 'doctor';
-const PASSWORD = process.env.E2E_PASSWORD ?? 'OpenmrsDoc123';
+const PASSWORD = process.env.E2E_PASSWORD ?? 'Doctor123';
 const SEARCH_TERM = process.env.E2E_PATIENT_SEARCH ?? 'John';
 
 /**

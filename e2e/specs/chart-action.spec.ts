@@ -15,7 +15,7 @@ import { expect, test } from '@playwright/test';
 
 const OPENMRS = process.env.E2E_BASE_URL ?? 'http://localhost/openmrs';
 const USERNAME = process.env.E2E_USERNAME ?? 'doctor';
-const PASSWORD = process.env.E2E_PASSWORD ?? 'OpenmrsDoc123';
+const PASSWORD = process.env.E2E_PASSWORD ?? 'Doctor123';
 
 test('the launch action is reachable from a patient chart', async ({ page, request }) => {
   await test.step('sign in through the session endpoint', async () => {

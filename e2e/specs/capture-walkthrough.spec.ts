@@ -17,7 +17,7 @@ import * as path from 'path';
 
 const OPENMRS = process.env.E2E_BASE_URL ?? 'http://localhost/openmrs';
 const USERNAME = process.env.E2E_USERNAME ?? 'doctor';
-const PASSWORD = process.env.E2E_PASSWORD ?? 'OpenmrsDoc123';
+const PASSWORD = process.env.E2E_PASSWORD ?? 'Doctor123';
 const APP = process.env.E2E_APP_URL ?? 'http://localhost:3000';
 const SHOTS =
   process.env.E2E_SCREENSHOT_DIR ?? path.resolve(__dirname, '../../../openmrs-distro-smartonfhir/docs/images');
