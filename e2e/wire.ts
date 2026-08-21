@@ -80,6 +80,14 @@ export class Wire {
           return;
         }
 
+        // The discovery document lives under the FHIR base, so dropping it from INTERESTING was not
+        // enough to stop capturing it here. Whether the passive copy or the spec's explicit fetch won
+        // then varied per run, and the two send a different Accept header, so the committed
+        // documentation flipped between `*/*` and `application/json` for no reason.
+        if (url.includes('/.well-known/')) {
+          return;
+        }
+
         this.exchanges.push({
           step: this.current,
           method: request.method(),
