@@ -38,3 +38,6 @@ Thumbs.db
 test-results/
 playwright-report/
 .playwright/
+
+# npm pack output; the packed module is committed in the distribution, not here
+*.tgz
