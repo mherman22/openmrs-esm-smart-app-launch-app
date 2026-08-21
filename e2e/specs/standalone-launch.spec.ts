@@ -1,4 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
+import * as path from 'path';
+import { group, render, Wire, writeBlocks } from '../wire';
 
 const OPENMRS = process.env.E2E_BASE_URL ?? 'http://localhost/openmrs';
 const KEYCLOAK = process.env.E2E_KEYCLOAK_URL ?? 'http://localhost:8180';
@@ -59,7 +61,9 @@ function watchHandOff(page: Page) {
 
 test('a standalone launch chooses a patient and returns that patient as launch context', async ({ page, request }) => {
   const errors: Array<string> = [];
+  const wire = new Wire();
   page.on('pageerror', (error) => errors.push(error.message));
+  wire.watch(page);
   const handOff = watchHandOff(page);
 
   await test.step('the authorization server asks the clinician to sign in', async () => {
@@ -122,6 +126,22 @@ test('a standalone launch chooses a patient and returns that patient as launch c
     expect(response.status(), 'the code could not be exchanged for a token').toBe(200);
     const granted = await response.json();
 
+    wire.record({
+      method: 'POST',
+      url: `${KEYCLOAK}/realms/${REALM}/protocol/openid-connect/token`,
+      status: response.status(),
+      requestHeaders: { 'content-type': 'application/x-www-form-urlencoded' },
+      requestBody: new URLSearchParams({
+        client_id: CLIENT_ID,
+        grant_type: 'authorization_code',
+        code: code!,
+        redirect_uri: REDIRECT_URI,
+        code_verifier: CODE_VERIFIER,
+      }).toString(),
+      responseHeaders: { 'content-type': 'application/json' },
+      responseBody: JSON.stringify(granted),
+    });
+
     // SMART returns launch context alongside the access token, in the token response itself rather
     // than as a claim inside the token.
     expect(granted.access_token, 'no access token was issued').toBeTruthy();
@@ -133,6 +153,24 @@ test('a standalone launch chooses a patient and returns that patient as launch c
       headers: { Authorization: `Bearer ${granted.access_token}` },
     });
     expect(patient.status(), 'the granted token cannot read the patient it was granted for').toBe(200);
+
+    wire.record({
+      method: 'GET',
+      url: `${OPENMRS}/ws/fhir2/R4/Patient/${granted.patient}`,
+      status: patient.status(),
+      requestHeaders: { authorization: `Bearer ${granted.access_token}`, accept: 'application/json' },
+      responseHeaders: { 'content-type': 'application/fhir+json' },
+      responseBody: await patient.text(),
+    });
+  });
+
+  await test.step('write the request and response blocks the walkthrough quotes', async () => {
+    const blocks = Object.fromEntries(
+      Object.entries(group(wire.all)).map(([name, exchanges]) => [name, render(exchanges)]),
+    );
+
+    writeBlocks(path.resolve(__dirname, '../../../openmrs-distro-smartonfhir/docs/standalone-launch.md'), blocks);
+    console.warn(`  wrote wire blocks for: ${Object.keys(blocks).join(', ')}`);
   });
 
   await test.step('the session the launch created does not outlive it', async () => {

@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import { group, render, Wire, writeBlocks } from '../wire';
 
 /**
  * Captures the screenshots for the EHR launch walkthrough in openmrs-distro-smartonfhir.
@@ -24,6 +25,7 @@ const SHOTS =
 
 let step = 0;
 const chain: string[] = [];
+const wire = new Wire();
 async function shot(page: Page, name: string) {
   fs.mkdirSync(SHOTS, { recursive: true });
   step += 1;
@@ -32,8 +34,10 @@ async function shot(page: Page, name: string) {
   console.warn(`  captured ${path.basename(file)}`);
 }
 
-test('capture the EHR launch, end to end', async ({ page }) => {
+test('capture the EHR launch, end to end', async ({ page, request }) => {
   test.setTimeout(4 * 60 * 1000);
+
+  wire.watch(page);
 
   await test.step('the OpenMRS login page', async () => {
     await page.goto(`${OPENMRS}/spa/login`);
@@ -111,6 +115,7 @@ test('capture the EHR launch, end to end', async ({ page }) => {
       });
     record(page);
     page.context().on('page', record);
+    wire.watch(page.context());
 
     // The launch may open the app in a new tab; take whichever page ends up carrying it.
     const popup = page.waitForEvent('popup', { timeout: 15000 }).catch(() => null);
@@ -186,5 +191,28 @@ test('capture the EHR launch, end to end', async ({ page }) => {
     );
     fs.writeFileSync(path.join(SHOTS, '..', 'launch-redirects.txt'), redacted.join('\n') + '\n');
     console.warn(`  recorded ${seen.length} navigations`);
+  });
+
+  await test.step('write the request and response blocks the walkthrough quotes', async () => {
+    // Fetched here rather than recorded off the page. The application does read this during the
+    // launch, but a body read that races with its own page being torn down is not something to hang
+    // committed documentation on.
+    const discovery = await request.get(`${OPENMRS}/ws/fhir2/R4/.well-known/smart-configuration`);
+    expect(discovery.status(), 'the discovery document is not being served').toBe(200);
+
+    wire.record({
+      method: 'GET',
+      url: `${OPENMRS}/ws/fhir2/R4/.well-known/smart-configuration`,
+      status: discovery.status(),
+      requestHeaders: { accept: 'application/json' },
+      responseHeaders: { 'content-type': 'application/json' },
+      responseBody: await discovery.text(),
+    });
+
+    const grouped = group(wire.all);
+    const blocks = Object.fromEntries(Object.entries(grouped).map(([name, exchanges]) => [name, render(exchanges)]));
+
+    writeBlocks(path.join(SHOTS, '..', 'ehr-launch.md'), blocks);
+    console.warn(`  wrote wire blocks for: ${Object.keys(blocks).join(', ')}`);
   });
 });
