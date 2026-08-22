@@ -112,6 +112,21 @@ describe('the app list', () => {
     expect(target.searchParams.get('launchUrl'), 'the browser must not name a launch address').toBeNull();
   });
 
+  it('launches once, however many times the button is pressed', async () => {
+    // A launch handle is single-use. Two launches meant two dialogs, the second showing the server's
+    // `400 Unknown launch` where the app should have been.
+    launchMode = 'iframe';
+    appsAre({ apps: [{ id: 'vitals-review', name: 'Vitals Review' }] });
+
+    render(<SmartAppsModal patientUuid={PATIENT} closeModal={vi.fn()} />);
+    const button = screen.getByRole('button', { name: /^launch$/i });
+    await userEvent.click(button);
+    await userEvent.click(button);
+    await userEvent.click(button);
+
+    expect(screen.getAllByTitle('Vitals Review')).toHaveLength(1);
+  });
+
   it('frames the app over the chart instead, when that is how the deployment presents a launch', async () => {
     launchMode = 'iframe';
     appsAre({ apps: [{ id: 'vitals-review', name: 'Vitals Review' }] });
@@ -123,13 +138,13 @@ describe('the app list', () => {
     // The clinician stays where they are: no navigation at all.
     expect(window.location.assign).not.toHaveBeenCalled();
 
-    // And the picker gets out of the way, rather than sitting behind the app it just opened.
-    expect(closeModal).toHaveBeenCalled();
-
-    expect(mockShowModal).toHaveBeenCalledWith(
-      'smart-app-frame-modal',
-      expect.objectContaining({ appId: 'vitals-review', appName: 'Vitals Review', patientUuid: PATIENT }),
-    );
+    // One dialog, which becomes the app. Asking the modal system for a second one produced two
+    // containers from a single call, and the second showed `400 Unknown launch`.
+    const frames = screen.getAllByTitle('Vitals Review');
+    expect(frames).toHaveLength(1);
+    const src = new URL((frames[0] as HTMLIFrameElement).src, 'http://localhost');
+    expect(src.pathname).toBe('/openmrs/ms/smartEhrLaunchServlet');
+    expect(src.searchParams.get('appId')).toBe('vitals-review');
   });
 
   it('explains a list that could not be loaded', () => {

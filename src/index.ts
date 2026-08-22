@@ -25,8 +25,3 @@ export const launchAppAction = getAsyncLifecycle(() => import('./launch-app.exte
 // Modals
 
 export const smartAppsModal = getAsyncLifecycle(() => import('./smart-apps.modal'), options);
-
-// A launched app, framed over the chart rather than replacing it. Separate from the picker so the list
-// closes as the app opens: two stacked dialogs would leave the clinician looking at a list they have
-// already used.
-export const smartAppFrameModal = getAsyncLifecycle(() => import('./smart-app-frame.modal'), options);

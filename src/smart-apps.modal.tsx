@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { showModal, useConfig } from '@openmrs/esm-framework';
+import { useConfig } from '@openmrs/esm-framework';
 import {
   Button,
   InlineLoading,
@@ -15,6 +15,7 @@ import {
 } from '@carbon/react';
 import { useSmartApps, launchSmartApp } from './smart-apps.resource';
 import type { ConfigSchema } from './config-schema';
+import SmartAppFrame from './smart-app-frame.modal';
 
 interface SmartAppsModalProps {
   patientUuid: string;
@@ -33,26 +34,40 @@ const SmartAppsModal: React.FC<SmartAppsModalProps> = ({ patientUuid, closeModal
   const { apps, isLoading, error } = useSmartApps();
   const config = useConfig<ConfigSchema>();
   const [launching, setLaunching] = useState<string | null>(null);
+  const started = useRef(false);
+  const [framed, setFramed] = useState<{ appId: string; appName: string } | null>(null);
 
   const launch = (appId: string, appName: string) => {
+    // A launch handle is single-use, so launching twice is never right: the second attempt redeems a
+    // handle the first already spent and the server answers `400 Unknown launch`. The disabled button
+    // is not enough on its own -- it only disables after the state update, and a second event dispatched
+    // before that slips through, which showed up as two dialogs side by side, one of them an error page.
+    if (started.current) {
+      return;
+    }
+    started.current = true;
+
     setLaunching(appId);
 
     // 'redirect' leaves the chart, which is what a SMART app expects by default. 'iframe' keeps the
     // clinician here and puts the app in a dialog over the chart; the picker closes as it opens, because
     // two stacked dialogs would leave them looking at a list they have already finished with.
     if (config.launchMode === 'iframe') {
-      closeModal();
-      const dispose = showModal('smart-app-frame-modal', {
-        appId,
-        appName,
-        patientUuid,
-        closeModal: () => dispose(),
-      });
+      setFramed({ appId, appName });
       return;
     }
 
     launchSmartApp(appId, patientUuid);
   };
+
+  // The app replaces the list inside this dialog rather than opening a second one. Asking the modal
+  // system for another dialog produced two: one call, two containers, two iframes, and because a launch
+  // handle is single-use the second showed the server's `400 Unknown launch` beside the working app.
+  if (framed) {
+    return (
+      <SmartAppFrame appId={framed.appId} appName={framed.appName} patientUuid={patientUuid} closeModal={closeModal} />
+    );
+  }
 
   return (
     <>

@@ -24,10 +24,6 @@
     {
       "name": "smart-apps-modal",
       "component": "smartAppsModal"
-    },
-    {
-      "name": "smart-app-frame-modal",
-      "component": "smartAppFrameModal"
     }
   ]
 }

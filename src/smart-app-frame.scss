@@ -1,23 +1,25 @@
 @use '@carbon/layout';
 
-/* A launched app is a whole screen's worth of content, so the dialog gives it nearly the whole viewport
-   rather than the default modal width -- a vitals review squeezed into 40rem is unreadable. */
+/* The iframe carries the height, not the dialog body.
+ *
+ * Sizing the body instead made it a greedy flex sibling of the dialog's own header, which Carbon lays
+ * out in the same column: the header was squeezed from 44px to 30px while its 28px title still started
+ * 16px down, so the title overflowed its box and appeared sliced off at the top of the dialog. Letting
+ * the body size to its content keeps the header at its natural height. */
 .body {
-  display: flex;
-  flex-direction: column;
   padding: 0;
-  height: 80vh;
-  max-height: 80vh;
 }
 
 .frame {
-  flex: 1 1 auto;
+  display: block;
   width: 100%;
+  /* Room for the dialog's header and the footer beneath, within Carbon's 84% max-height. */
+  height: min(66vh, calc(100vh - 16rem));
   border: 0;
 }
 
 .escape {
-  padding: layout.$spacing-02 layout.$spacing-05;
+  padding: layout.$spacing-03 layout.$spacing-05;
   margin: 0;
   font-size: 0.75rem;
   color: var(--cds-text-secondary, #525252);
