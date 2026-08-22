@@ -33,16 +33,26 @@ export function useSmartApps() {
 }
 
 /**
- * Starts an EHR launch.
+ * Where an EHR launch starts.
  *
- * A whole-page navigation, not a client-side route: the server answers with a redirect to the app,
- * which is outside this application. The app is named by id — the launch URL is looked up on the
- * server, so that nothing here can decide where a clinician is sent.
+ * The app is named by id and nothing more: the launch URL is looked up on the server, so that nothing
+ * here can decide — or be persuaded — where a clinician is sent. The same address serves both
+ * presentations, as a navigation target and as an iframe source.
  */
-export function launchSmartApp(appId: string, patientUuid: string) {
+export function launchUrlFor(appId: string, patientUuid: string) {
   const target = new URL(`${window.openmrsBase}/ms/smartEhrLaunchServlet`, window.location.origin);
   target.searchParams.set('appId', appId);
   target.searchParams.set('patientId', patientUuid);
 
-  window.location.assign(target.toString());
+  return target.toString();
+}
+
+/**
+ * Starts an EHR launch by leaving the chart.
+ *
+ * A whole-page navigation, not a client-side route: the server answers with a redirect to the app,
+ * which is outside this application.
+ */
+export function launchSmartApp(appId: string, patientUuid: string) {
+  window.location.assign(launchUrlFor(appId, patientUuid));
 }

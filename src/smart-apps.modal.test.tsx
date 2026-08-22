@@ -14,8 +14,14 @@ vi.mock('./smart-apps.resource', async () => {
 });
 
 const mockShowModal = vi.fn((_name: string, _props?: Record<string, unknown>) => vi.fn());
+
+// Each test states the mode it is about. The shipped default is 'iframe'; these start from 'redirect'
+// because that is the behaviour the older assertions were written against.
+let launchMode: 'iframe' | 'redirect' = 'redirect';
+
 vi.mock('@openmrs/esm-framework', () => ({
   showModal: (name: string, props?: Record<string, unknown>) => mockShowModal(name, props),
+  useConfig: () => ({ launchMode }),
   openmrsFetch: vi.fn(),
 }));
 
@@ -37,6 +43,7 @@ function appsAre(state: Partial<ReturnType<typeof useSmartApps>>) {
 const GROWTH_CHART = { id: 'growth-chart', name: 'Growth Chart', description: 'Plots growth over time' };
 
 beforeEach(() => {
+  launchMode = 'redirect';
   (window as unknown as { openmrsBase: string }).openmrsBase = '/openmrs';
   Object.defineProperty(window, 'location', {
     writable: true,
@@ -103,6 +110,26 @@ describe('the app list', () => {
     expect(target.searchParams.get('appId')).toBe('growth-chart');
     expect(target.searchParams.get('patientId')).toBe(PATIENT);
     expect(target.searchParams.get('launchUrl'), 'the browser must not name a launch address').toBeNull();
+  });
+
+  it('frames the app over the chart instead, when that is how the deployment presents a launch', async () => {
+    launchMode = 'iframe';
+    appsAre({ apps: [{ id: 'vitals-review', name: 'Vitals Review' }] });
+    const closeModal = vi.fn();
+
+    render(<SmartAppsModal patientUuid={PATIENT} closeModal={closeModal} />);
+    await userEvent.click(screen.getByRole('button', { name: /^launch$/i }));
+
+    // The clinician stays where they are: no navigation at all.
+    expect(window.location.assign).not.toHaveBeenCalled();
+
+    // And the picker gets out of the way, rather than sitting behind the app it just opened.
+    expect(closeModal).toHaveBeenCalled();
+
+    expect(mockShowModal).toHaveBeenCalledWith(
+      'smart-app-frame-modal',
+      expect.objectContaining({ appId: 'vitals-review', appName: 'Vitals Review', patientUuid: PATIENT }),
+    );
   });
 
   it('explains a list that could not be loaded', () => {

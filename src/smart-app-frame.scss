@@ -1,0 +1,25 @@
+@use '@carbon/layout';
+
+/* A launched app is a whole screen's worth of content, so the dialog gives it nearly the whole viewport
+   rather than the default modal width -- a vitals review squeezed into 40rem is unreadable. */
+.body {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  height: 80vh;
+  max-height: 80vh;
+}
+
+.frame {
+  flex: 1 1 auto;
+  width: 100%;
+  border: 0;
+}
+
+.escape {
+  padding: layout.$spacing-02 layout.$spacing-05;
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--cds-text-secondary, #525252);
+  border-top: 1px solid var(--cds-border-subtle, #e0e0e0);
+}

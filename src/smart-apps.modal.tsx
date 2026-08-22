@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { showModal, useConfig } from '@openmrs/esm-framework';
 import {
   Button,
   InlineLoading,
@@ -13,6 +14,7 @@ import {
   StructuredListWrapper,
 } from '@carbon/react';
 import { useSmartApps, launchSmartApp } from './smart-apps.resource';
+import type { ConfigSchema } from './config-schema';
 
 interface SmartAppsModalProps {
   patientUuid: string;
@@ -29,10 +31,26 @@ interface SmartAppsModalProps {
 const SmartAppsModal: React.FC<SmartAppsModalProps> = ({ patientUuid, closeModal }) => {
   const { t } = useTranslation();
   const { apps, isLoading, error } = useSmartApps();
+  const config = useConfig<ConfigSchema>();
   const [launching, setLaunching] = useState<string | null>(null);
 
-  const launch = (appId: string) => {
+  const launch = (appId: string, appName: string) => {
     setLaunching(appId);
+
+    // 'redirect' leaves the chart, which is what a SMART app expects by default. 'iframe' keeps the
+    // clinician here and puts the app in a dialog over the chart; the picker closes as it opens, because
+    // two stacked dialogs would leave them looking at a list they have already finished with.
+    if (config.launchMode === 'iframe') {
+      closeModal();
+      const dispose = showModal('smart-app-frame-modal', {
+        appId,
+        appName,
+        patientUuid,
+        closeModal: () => dispose(),
+      });
+      return;
+    }
+
     launchSmartApp(appId, patientUuid);
   };
 
@@ -79,7 +97,7 @@ const SmartAppsModal: React.FC<SmartAppsModalProps> = ({ patientUuid, closeModal
                     {app.description ? <div>{app.description}</div> : null}
                   </StructuredListCell>
                   <StructuredListCell>
-                    <Button size="sm" disabled={launching !== null} onClick={() => launch(app.id)}>
+                    <Button size="sm" disabled={launching !== null} onClick={() => launch(app.id, app.name)}>
                       {launching === app.id ? t('launching', 'Launching') : t('launch', 'Launch')}
                     </Button>
                   </StructuredListCell>
