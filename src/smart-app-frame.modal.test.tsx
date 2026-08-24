@@ -29,6 +29,9 @@ describe('a framed app', () => {
 
     expect(src.pathname).toBe('/openmrs/ms/smartEhrLaunchServlet');
     expect(src.searchParams.get('appId')).toBe('vitals-review');
+    // The chart is showing its own patient header around the frame, so the app is told it needs no
+    // banner of its own -- the server turns this into need_patient_banner in the token response.
+    expect(src.searchParams.get('embedded')).toBe('true');
     expect(src.searchParams.get('patientId')).toBe(PATIENT);
   });
 
