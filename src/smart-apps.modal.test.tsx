@@ -110,8 +110,6 @@ describe('the app list', () => {
     expect(target.searchParams.get('appId')).toBe('growth-chart');
     expect(target.searchParams.get('patientId')).toBe(PATIENT);
     expect(target.searchParams.get('launchUrl'), 'the browser must not name a launch address').toBeNull();
-    // Nothing frames this one, so it must not claim the chart is showing a patient header.
-    expect(target.searchParams.get('embedded')).toBeNull();
   });
 
   it('launches once, however many times the button is pressed', async () => {
@@ -147,8 +145,6 @@ describe('the app list', () => {
     const src = new URL((frames[0] as HTMLIFrameElement).src, 'http://localhost');
     expect(src.pathname).toBe('/openmrs/ms/smartEhrLaunchServlet');
     expect(src.searchParams.get('appId')).toBe('vitals-review');
-    // Framed inside the chart, so the app is told the chart is already naming the patient.
-    expect(src.searchParams.get('embedded')).toBe('true');
   });
 
   it('explains a list that could not be loaded', () => {

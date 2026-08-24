@@ -39,17 +39,10 @@ export function useSmartApps() {
  * here can decide — or be persuaded — where a clinician is sent. The same address serves both
  * presentations, as a navigation target and as an iframe source.
  */
-export function launchUrlFor(appId: string, patientUuid: string, { embedded = false } = {}) {
+export function launchUrlFor(appId: string, patientUuid: string) {
   const target = new URL(`${window.openmrsBase}/ms/smartEhrLaunchServlet`, window.location.origin);
   target.searchParams.set('appId', appId);
   target.searchParams.set('patientId', patientUuid);
-
-  // Whether the chart is keeping the app inside its own chrome. The server turns this into
-  // need_patient_banner in the token response: the app draws its own banner when it has the window,
-  // and leaves it to the chart's patient header when it does not. Only this side knows which.
-  if (embedded) {
-    target.searchParams.set('embedded', 'true');
-  }
 
   return target.toString();
 }

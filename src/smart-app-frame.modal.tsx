@@ -27,7 +27,7 @@ interface SmartAppFrameModalProps {
  */
 const SmartAppFrameModal: React.FC<SmartAppFrameModalProps> = ({ appId, appName, patientUuid, closeModal }) => {
   const { t } = useTranslation();
-  const src = launchUrlFor(appId, patientUuid, { embedded: true });
+  const src = launchUrlFor(appId, patientUuid);
 
   return (
     <>
