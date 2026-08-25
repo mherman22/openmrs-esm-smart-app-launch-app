@@ -18,6 +18,7 @@
     "coverage": "vitest run --coverage --passWithNoTests",
     "test:e2e": "playwright test --config e2e/playwright.config.ts",
     "typescript": "tsc",
+    "verify": "npm run lint && npm run typescript && npm run test",
     "lint": "eslint src",
     "extract-translations": "i18next 'src/**/*.component.tsx' 'src/**/*.extension.tsx' 'src/**/*.modal.tsx' 'src/**/*.workspace.tsx' 'src/index.ts' --config ./tools/i18next-parser.config.js",
     "prettier": "prettier --config prettier.config.js --write \"src/**/*.{ts,tsx,css,scss}\"",
@@ -32,12 +33,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/openmrs/openmrs-esm-smart-app-launch.git"
+    "url": "git+https://github.com/mherman22/openmrs-esm-smart-app-launch-app.git"
   },
   "bugs": {
-    "url": "https://github.com/openmrs/openmrs-esm-smart-app-launch/issues"
+    "url": "https://github.com/mherman22/openmrs-esm-smart-app-launch-app/issues"
   },
-  "homepage": "https://github.com/openmrs/openmrs-esm-smart-app-launch#readme",
+  "homepage": "https://github.com/mherman22/openmrs-esm-smart-app-launch-app#readme",
   "publishConfig": {
     "access": "public"
   },
@@ -45,9 +46,6 @@
     "dist",
     "src"
   ],
-  "dependencies": {
-    "@carbon/react": "1.x"
-  },
   "peerDependencies": {
     "@carbon/react": "1.x",
     "@openmrs/esm-framework": "*",
@@ -64,6 +62,7 @@
     "swr": "2.x"
   },
   "devDependencies": {
+    "@carbon/react": "1.x",
     "@openmrs/eslint-config": "^2.0.0",
     "@openmrs/esm-framework": "next",
     "@playwright/test": "^1.62.1",

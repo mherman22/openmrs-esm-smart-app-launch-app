@@ -15,12 +15,11 @@ interface SmartAppsResponse {
 /**
  * The SMART apps this server permits to be launched.
  *
- * Served by the smartonfhir module rather than the REST API, and deliberately without each app's
- * launch URL: where a launch is sent is the server's business, and a chart screen only needs a name
- * and an id to link with.
+ * Served by the smartonfhir module, deliberately without each app's launch URL: where a launch is
+ * sent is the server's business, and a chart screen only needs a name and an id to link with.
  */
 export function useSmartApps() {
-  const { data, error, isLoading } = useSWR<{ data: SmartAppsResponse }>('/ms/smartApps', openmrsFetch, {
+  const { data, error, isLoading } = useSWR<{ data: SmartAppsResponse }>('/ws/rest/v1/smartonfhir/apps', openmrsFetch, {
     // The registry is deployment configuration; it does not change while a clinician works.
     revalidateOnFocus: false,
   });
