@@ -40,7 +40,7 @@ function appsAre(state: Partial<ReturnType<typeof useSmartApps>>) {
   } as ReturnType<typeof useSmartApps>);
 }
 
-const GROWTH_CHART = { id: 'growth-chart', name: 'Growth Chart', description: 'Plots growth over time' };
+const GROWTH_CHART = { uuid: 'growth-chart', display: 'Growth Chart', description: 'Plots growth over time' };
 
 beforeEach(() => {
   launchMode = 'redirect';
@@ -99,7 +99,7 @@ describe('the app list', () => {
    * The app is named by id and nothing else. The launch URL lives on the server and is looked up
    * there, so that nothing in the browser can decide — or be persuaded — where a clinician is sent.
    */
-  it('starts the launch on the server, naming the app by id', async () => {
+  it('starts the launch on the server, naming the app by uuid', async () => {
     const user = userEvent.setup();
 
     render(<SmartAppsModal patientUuid={PATIENT} closeModal={vi.fn()} />);
@@ -116,7 +116,7 @@ describe('the app list', () => {
     // A launch handle is single-use. Two launches meant two dialogs, the second showing the server's
     // `400 Unknown launch` where the app should have been.
     launchMode = 'iframe';
-    appsAre({ apps: [{ id: 'vitals-review', name: 'Vitals Review' }] });
+    appsAre({ apps: [{ uuid: 'vitals-review', display: 'Vitals Review' }] });
 
     render(<SmartAppsModal patientUuid={PATIENT} closeModal={vi.fn()} />);
     const button = screen.getByRole('button', { name: /^launch$/i });
@@ -129,7 +129,7 @@ describe('the app list', () => {
 
   it('frames the app over the chart instead, when that is how the deployment presents a launch', async () => {
     launchMode = 'iframe';
-    appsAre({ apps: [{ id: 'vitals-review', name: 'Vitals Review' }] });
+    appsAre({ apps: [{ uuid: 'vitals-review', display: 'Vitals Review' }] });
     const closeModal = vi.fn();
 
     render(<SmartAppsModal patientUuid={PATIENT} closeModal={closeModal} />);

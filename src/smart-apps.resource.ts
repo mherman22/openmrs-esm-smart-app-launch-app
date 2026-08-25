@@ -2,30 +2,34 @@ import useSWR from 'swr';
 import { openmrsFetch } from '@openmrs/esm-framework';
 
 export interface SmartApp {
-  id: string;
-  name: string;
+  uuid: string;
+  display: string;
   description?: string;
   launchContext?: string;
 }
 
 interface SmartAppsResponse {
-  apps: Array<SmartApp>;
+  results: Array<SmartApp>;
 }
 
 /**
  * The SMART apps this server permits to be launched.
  *
- * Served by the smartonfhir module, deliberately without each app's launch URL: where a launch is
- * sent is the server's business, and a chart screen only needs a name and an id to link with.
+ * A custom representation rather than the default: a chart screen needs a name and a launch context,
+ * and never the launch URL, since where a launch is sent is the server's business.
  */
 export function useSmartApps() {
-  const { data, error, isLoading } = useSWR<{ data: SmartAppsResponse }>('/ws/rest/v1/smartonfhir/apps', openmrsFetch, {
-    // The registry is deployment configuration; it does not change while a clinician works.
-    revalidateOnFocus: false,
-  });
+  const { data, error, isLoading } = useSWR<{ data: SmartAppsResponse }>(
+    '/ws/rest/v1/smartapp?v=custom:(uuid,display,description,launchContext)',
+    openmrsFetch,
+    {
+      // The registry is deployment configuration; it does not change while a clinician works.
+      revalidateOnFocus: false,
+    },
+  );
 
   return {
-    apps: data?.data?.apps ?? [],
+    apps: data?.data?.results ?? [],
     isLoading,
     error,
   };

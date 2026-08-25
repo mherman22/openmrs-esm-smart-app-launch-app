@@ -106,14 +106,14 @@ const SmartAppsModal: React.FC<SmartAppsModalProps> = ({ patientUuid, closeModal
           <StructuredListWrapper selection>
             <StructuredListBody>
               {apps.map((app) => (
-                <StructuredListRow key={app.id}>
+                <StructuredListRow key={app.uuid}>
                   <StructuredListCell>
-                    <strong>{app.name}</strong>
+                    <strong>{app.display}</strong>
                     {app.description ? <div>{app.description}</div> : null}
                   </StructuredListCell>
                   <StructuredListCell>
-                    <Button size="sm" disabled={launching !== null} onClick={() => launch(app.id, app.name)}>
-                      {launching === app.id ? t('launching', 'Launching') : t('launch', 'Launch')}
+                    <Button size="sm" disabled={launching !== null} onClick={() => launch(app.uuid, app.display)}>
+                      {launching === app.uuid ? t('launching', 'Launching') : t('launch', 'Launch')}
                     </Button>
                   </StructuredListCell>
                 </StructuredListRow>
