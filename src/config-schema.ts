@@ -1,16 +1,10 @@
-import { Type } from '@openmrs/esm-framework';
+import { Type, validators } from '@openmrs/esm-framework';
 
 export const configSchema = {
   launchMode: {
     _type: Type.String,
     _default: 'iframe',
-    _validators: [
-      {
-        name: 'oneOf',
-        message: "must be 'iframe' or 'redirect'",
-        assertion: (value: string) => ['iframe', 'redirect'].includes(value),
-      },
-    ],
+    _validators: [validators.oneOf(['iframe', 'redirect'])],
     _description:
       "How a launched app is presented. 'iframe' keeps the clinician in the chart, with the app in a " +
       "dialog over it; 'redirect' navigates away to the app, which is what a SMART app expects by " +
