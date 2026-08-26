@@ -17,7 +17,8 @@
       "component": "launchAppAction",
       "slot": "patient-actions-slot",
       "online": true,
-      "offline": false
+      "offline": false,
+      "privileges": "Get SMART Apps"
     }
   ],
   "modals": [

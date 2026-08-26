@@ -16,6 +16,8 @@
   "noAppsDetail": "No SMART apps have been registered on this server.",
   "noResults": "No patients match that search",
   "noResultsDetail": "Check the spelling, or search by identifier instead.",
+  "notPermitted": "You cannot launch apps",
+  "notPermittedDetail": "Your account does not have the \"Get SMART Apps\" privilege. Ask an administrator to add it to one of your roles.",
   "searchFailed": "Could not search for patients",
   "searching": "Searching",
   "searchLabel": "Search by name or identifier",
