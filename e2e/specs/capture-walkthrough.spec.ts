@@ -142,22 +142,41 @@ test('capture the EHR launch, end to end', async ({ page, request }) => {
       await consent.click();
     }
 
-    await launched.waitForURL((url) => url.toString().startsWith(APP), { timeout: 90000 });
+    // launchMode decides where the app ends up: 'iframe' (the default) renders it in a dialog over the
+    // chart, so the page URL never leaves OpenMRS, and 'redirect' navigates away to it. Read the app
+    // through whichever holds it rather than assuming the navigation.
+    const framed = await launched
+      .locator('iframe')
+      .first()
+      .waitFor({ state: 'attached', timeout: 15000 })
+      .then(() => true)
+      .catch(() => false);
+
+    // Conditional on purpose, as with the consent screen above: which of the two presentations the
+    // launch uses is a deployment's choice, and the capture has to work for either.
+    // eslint-disable-next-line playwright/no-conditional-in-test
+    const app = framed ? launched.frameLocator('iframe') : launched;
+
+    // eslint-disable-next-line playwright/no-conditional-in-test
+    if (!framed) {
+      await launched.waitForURL((url) => url.toString().startsWith(APP), { timeout: 90000 });
+    }
+
     // The app reads the record before it can render anything, so wait for its verdict rather than for
     // the page load: a screenshot taken earlier catches a spinner.
-    await expect(launched.locator('.banner h2'), 'the app never reached a verdict').toBeVisible({ timeout: 60000 });
+    await expect(app.locator('.banner h2'), 'the app never reached a verdict').toBeVisible({ timeout: 60000 });
     await shot(launched, 'app-received-the-patient');
 
     // The point of the whole flow, and of this app: it is not showing the record back, it is reading
     // it. The banner counts vitals outside their reference range, and the BMI card holds a value the
     // server does not store.
-    await expect(launched.locator('.banner h2')).toContainText(/of \d+ latest vitals/i);
-    await expect(launched.locator('svg.chart').first(), 'no vitals were trended').toBeVisible();
+    await expect(app.locator('.banner h2')).toContainText(/of \d+ latest vitals/i);
+    await expect(app.locator('svg.chart').first(), 'no vitals were trended').toBeVisible();
 
     // Scroll to the derived card before photographing it. Without this the shot is taken at the same
     // offset as the one above and the two files come out byte-identical, so the walkthrough illustrated
     // "the value the server does not store" with a picture that did not contain it.
-    const derived = launched.locator('.card:has(.derived)').first();
+    const derived = app.locator('.card:has(.derived)').first();
     await derived.scrollIntoViewIfNeeded();
     await expect(derived.locator('.big'), 'no BMI was derived').toBeVisible();
     await expect(derived.locator('.cat')).toContainText(/weight|obese/i);
